@@ -15,13 +15,13 @@ pub fn calculate(freeplay_round_seed: i64, start_round: i32, end_round: i32) {
             list[i] = i as u16;
         }
 
-        shuffle_in_place(list, current_seed as i32);
+        shuffle_in_place(&mut list, current_seed as i32);
         // println!("{:?}", list);
         print_rounds(current_seed, current_round, list);
     }
 }
 
-fn shuffle_in_place(mut arr: [u16; constants::LIST_SIZE], seed: i32) {
+fn shuffle_in_place(mut arr: &mut [u16; constants::LIST_SIZE], seed: i32) {
     let mut rng = SeededRandom::new(seed as i64);
 
     for i in 0..arr.len() {
@@ -38,14 +38,15 @@ fn print_rounds(current_seed: i64, current_round: i32, arr: [u16; constants::LIS
         budget -= (rng.next_float() - 0.5) * budget;
     }
 
-    for &i in &arr {
-        let i = i as usize;
-        if &constants::LOWER_BOUNDS[i] <= &current_round
-            && &current_round <= &constants::UPPER_BOUNDS[i]
-            && &constants::SCORES[i] <= &budget
-        {
-            budget -= constants::SCORES[i];
-            // println!("{}", constants::ROUND_NAMES[i]);
+    unsafe {
+        for &i in &arr {
+            let i = i as usize;
+            if constants::LOWER_BOUNDS.get_unchecked(i) <= &current_round
+                && &current_round <= constants::UPPER_BOUNDS.get_unchecked(i)
+                && constants::SCORES.get_unchecked(i) <= &budget
+            {
+                budget -= *constants::SCORES.get_unchecked(i);
+            }
         }
     }
 }
